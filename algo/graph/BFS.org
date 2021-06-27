@@ -2,44 +2,171 @@
 
   #+name: dotInput
   #+begin_src q :results output
-    adj: "rstuvwxy"!("sv"; "rw"; "wxu"; "txy"; (),"r"; "stx"; "wtuy"; "xu")
-    -1@";\n" sv raze {(x ,"->"),/: adj x} each key adj;
-    
+    ; adj: "rstuvwxy"!("sv"; "rw"; "wxu"; "txy"; (),"r"; "stx"; "wtuy"; "xu")
+    ; -1@"\n" sv "--" sv/: string distinct asc each raze {x,/:adj x} each key adj;
+    ; adj: (`$/:key adj)!`$/:string each value adj // symbols are easier to handle
   #+end_src
 
   #+RESULTS: dotInput
   #+begin_example
-  r->s;
-  r->v;
-  s->r;
-  s->w;
-  t->w;
-  t->x;
-  t->u;
-  u->t;
-  u->x;
-  u->y;
-  v->r;
-  w->s;
-  w->t;
-  w->x;
-  x->w;
-  x->t;
-  x->u;
-  x->y;
-  y->x;
-  y->u
-  -1
+  r--s
+  r--v
+  s--w
+  t--w
+  t--x
+  t--u
+  u--x
+  u--y
+  w--x
+  x--y
   #+end_example
 
-
-
   #+begin_src dot :file test.png :var dotInput=dotInput
-    digraph G {
+    graph G {
         $dotInput
     }
-
   #+end_src
 
   #+RESULTS:
   [[file:test.png]]
+
+** Initially, the color of each node is null(white), depth is null(infinitive), parent is null.  The start node s is GRAY, with depth 0, and no parent, and queue is [s]
+  #+begin_src q :results output :exports both
+    ; s: `s
+    ; c: count adj
+    ; state:([]node: key adj; color: c#`WHITE; depth:c#0N; parent:` )
+    ; show state: update color: `GRAY, depth: 0 from state where node = s
+    ; queue: (),s
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  node color depth parent
+  -----------------------
+  r    WHITE             
+  s    GRAY  0           
+  t    WHITE             
+  u    WHITE             
+  v    WHITE             
+  w    WHITE             
+  x    WHITE             
+  y    WHITE             
+  #+end_example
+
+
+** At each step, if queue is not empty
+   #+begin_src q :results output :exports both
+   while[count queue
+     ; u: first queue
+     ; ud: first exec depth from state where node=u
+     ; child: state[`node] where (state[`node] in adj u) and state[`color]=`WHITE
+     ; state: update color: `GRAY, depth: ud+1, parent: u from state where node in child
+     ; state: update color: `BLACK from state where node = u
+     ; queue: (1_queue), child
+     ; show each (state; queue)
+     ]
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   node color depth parent
+   -----------------------
+   r    GRAY  1     s     
+   s    BLACK 0           
+   t    WHITE             
+   u    WHITE             
+   v    WHITE             
+   w    GRAY  1     s     
+   x    WHITE             
+   y    WHITE             
+   `r`w
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    WHITE             
+   u    WHITE             
+   v    GRAY  2     r     
+   w    GRAY  1     s     
+   x    WHITE             
+   y    WHITE             
+   `w`v
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    GRAY  2     w     
+   u    WHITE             
+   v    GRAY  2     r     
+   w    BLACK 1     s     
+   x    GRAY  2     w     
+   y    WHITE             
+   `v`t`x
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    GRAY  2     w     
+   u    WHITE             
+   v    BLACK 2     r     
+   w    BLACK 1     s     
+   x    GRAY  2     w     
+   y    WHITE             
+   `t`x
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    BLACK 2     w     
+   u    GRAY  3     t     
+   v    BLACK 2     r     
+   w    BLACK 1     s     
+   x    GRAY  2     w     
+   y    WHITE             
+   `x`u
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    BLACK 2     w     
+   u    GRAY  3     t     
+   v    BLACK 2     r     
+   w    BLACK 1     s     
+   x    BLACK 2     w     
+   y    GRAY  3     x     
+   `u`y
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    BLACK 2     w     
+   u    BLACK 3     t     
+   v    BLACK 2     r     
+   w    BLACK 1     s     
+   x    BLACK 2     w     
+   y    GRAY  3     x     
+   ,`y
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    BLACK 2     w     
+   u    BLACK 3     t     
+   v    BLACK 2     r     
+   w    BLACK 1     s     
+   x    BLACK 2     w     
+   y    BLACK 3     x     
+   `symbol$()
+   #+end_example
+
+
+   #+begin_src q
+   group depth
+   #+end_src
+
+   #+RESULTS:
+   | 0 | ,"s"  |
+   | 1 | "rw"  |
+   | 2 | "vtx" |
+   | 3 | "uy"  |
+   |   |       |
