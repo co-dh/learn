@@ -1,0 +1,45 @@
+* Breadth First Search
+
+  #+name: dotInput
+  #+begin_src q :results output
+    adj: "rstuvwxy"!("sv"; "rw"; "wxu"; "txy"; (),"r"; "stx"; "wtuy"; "xu")
+    -1@";\n" sv raze {(x ,"->"),/: adj x} each key adj;
+    
+  #+end_src
+
+  #+RESULTS: dotInput
+  #+begin_example
+  r->s;
+  r->v;
+  s->r;
+  s->w;
+  t->w;
+  t->x;
+  t->u;
+  u->t;
+  u->x;
+  u->y;
+  v->r;
+  w->s;
+  w->t;
+  w->x;
+  x->w;
+  x->t;
+  x->u;
+  x->y;
+  y->x;
+  y->u
+  -1
+  #+end_example
+
+
+
+  #+begin_src dot :file test.png :var dotInput=dotInput
+    digraph G {
+        $dotInput
+    }
+
+  #+end_src
+
+  #+RESULTS:
+  [[file:test.png]]
