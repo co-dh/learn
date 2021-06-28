@@ -1,7 +1,8 @@
+#+PROPERTY: header-args :results output :exports both
 *  Breadth First Search
 
   #+name: dotInput
-  #+begin_src q :results output
+  #+begin_src q :exports code
     ; adj: "rstuvwxy"!("sv"; "rw"; "wxu"; "txy"; (),"r"; "stx"; "wtuy"; "xu")
     ; -1@"\n" sv "--" sv/: string distinct asc each raze {x,/:adj x} each key adj;
     ; adj: (`$/:key adj)!`$/:string each value adj // symbols are easier to handle
@@ -31,7 +32,7 @@
   [[file:test.png]]
 
 ** Initially, the color of each node is null(white), depth is null(infinitive), parent is null.  The start node s is GRAY, with depth 0, and no parent, and queue is [s]
-  #+begin_src q :results output :exports both
+  #+begin_src q 
     ; s: `s
     ; c: count adj
     ; state:([]node: key adj; color: c#`WHITE; depth:c#0N; parent:` )
@@ -55,7 +56,7 @@
 
 
 ** At each step, if queue is not empty
-   #+begin_src q :results output :exports both
+   #+begin_src q 
    while[count queue
      ; u: first queue
      ; ud: first exec depth from state where node=u
@@ -170,15 +171,12 @@
 
      ~color[u]:`BLACK~
 
-  #+begin_src q :results none :exports both
+  #+begin_src q
     ; s: `s
     ; color: depth:parent: ()!(); 
     ; color[s]: `GRAY; depth[s]: 0
     ; queue: (),s
-  #+end_src
-** each loop
-  #+begin_src q :results output :exports both
-    while[count queue
+    ; while[count queue
          ; u: first queue
          ; child: {x where not x in key color}adj[u]
          ; color[child]: `GRAY
