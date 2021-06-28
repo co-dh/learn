@@ -1,4 +1,4 @@
-* Breadth First Search
+*  Breadth First Search
 
   #+name: dotInput
   #+begin_src q :results output
@@ -160,13 +160,119 @@
    #+end_example
 
 
-   #+begin_src q
-   group depth
+* Non table version is shorter and clearer
+  
+  This line of code is not very good. 
+
+     ~state: update color: `BLACK from state where node = u~
+
+   It's clear to write:
+
+     ~color[u]:`BLACK~
+
+  #+begin_src q :results none :exports both
+    ; s: `s
+    ; color: depth:parent: ()!(); 
+    ; color[s]: `GRAY; depth[s]: 0
+    ; queue: (),s
+  #+end_src
+** each loop
+  #+begin_src q :results output :exports both
+    while[count queue
+         ; u: first queue
+         ; child: {x where not x in key color}adj[u]
+         ; color[child]: `GRAY
+         ; depth[child]: depth[u]+1
+         ; parent[child]: u
+         ; color[u]:`BLACK
+         ; queue: (1_queue), child
+         ; show flip `node`color`depth`parent!(::;color;depth;parent)@\: key adj
+         ]
    #+end_src
 
    #+RESULTS:
-   | 0 | ,"s"  |
-   | 1 | "rw"  |
-   | 2 | "vtx" |
-   | 3 | "uy"  |
-   |   |       |
+   #+begin_example
+   node color depth parent
+   -----------------------
+   r    GRAY  1     s     
+   s    BLACK 0           
+   t                      
+   u                      
+   v                      
+   w    GRAY  1     s     
+   x                      
+   y                      
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t                      
+   u                      
+   v    GRAY  2     r     
+   w    GRAY  1     s     
+   x                      
+   y                      
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    GRAY  2     w     
+   u                      
+   v    GRAY  2     r     
+   w    BLACK 1     s     
+   x    GRAY  2     w     
+   y                      
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    GRAY  2     w     
+   u                      
+   v    BLACK 2     r     
+   w    BLACK 1     s     
+   x    GRAY  2     w     
+   y                      
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    BLACK 2     w     
+   u    GRAY  3     t     
+   v    BLACK 2     r     
+   w    BLACK 1     s     
+   x    GRAY  2     w     
+   y                      
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    BLACK 2     w     
+   u    GRAY  3     t     
+   v    BLACK 2     r     
+   w    BLACK 1     s     
+   x    BLACK 2     w     
+   y    GRAY  3     x     
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    BLACK 2     w     
+   u    BLACK 3     t     
+   v    BLACK 2     r     
+   w    BLACK 1     s     
+   x    BLACK 2     w     
+   y    GRAY  3     x     
+   node color depth parent
+   -----------------------
+   r    BLACK 1     s     
+   s    BLACK 0           
+   t    BLACK 2     w     
+   u    BLACK 3     t     
+   v    BLACK 2     r     
+   w    BLACK 1     s     
+   x    BLACK 2     w     
+   y    BLACK 3     x     
+   #+end_example
+
+   
+  
