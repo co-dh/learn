@@ -39,13 +39,12 @@
     / adj: array of array of int ( index of nodes)
     / src: int . The index of the source node
     BFS:{[adj; src]
-        ; visited: count[adj]#0b
-        ; visited[queue:(),src]: 1b;
-        ; while[count queue
-             ; queue,: 0N!adj[queue 0] inter where not visited
-             ; visited[queue]: 1b
-             ; queue: 1_queue
+        ; queue:(),src
+        ; i: -1
+        ; while[i<count[queue]-1
+             ; queue,: adj[queue i+:1] except queue
              ]
+        ; queue
          };
    #+end_src
 
@@ -55,14 +54,7 @@
    #+end_src
 
    #+RESULTS:
-   : 0 5
-   : ,4
-   : 2 6
-   : `long$()
-   : ,3
-   : ,7
-   : `long$()
-   : `long$()
+   : 1 0 5 4 2 6 3 7
    
 
 ** Shortest Path from s
