@@ -4,22 +4,22 @@
   #+name: dotInput
   #+begin_src q :exports code
     ; adj: "rstuvwxy"!("sv"; "rw"; "wxu"; "txy"; (),"r"; "stx"; "wtuy"; "xu")
-    ; -1@"\n" sv "--" sv/: string distinct asc each raze {x,/:adj x} each key adj;
-    ; adj: (`$/:key adj)!`$/:string each value adj // symbols are easier to handle
+    ; adj: value key[adj] ? adj
+    ; -1@"\n" sv "--" sv/: string distinct asc each raze {x,/:adj x} each til count adj;
   #+end_src
 
   #+RESULTS: dotInput
   #+begin_example
-  r--s
-  r--v
-  s--w
-  t--w
-  t--x
-  t--u
-  u--x
-  u--y
-  w--x
-  x--y
+  0--1
+  0--4
+  1--5
+  2--5
+  2--6
+  2--3
+  3--6
+  3--7
+  5--6
+  6--7
   #+end_example
 
   #+begin_src dot :file test.png :var dotInput=dotInput
@@ -31,246 +31,84 @@
   #+RESULTS:
   [[file:test.png]]
 
-** Initially, the color of each node is null(white), depth is null(infinitive), parent is null.  The start node s is GRAY, with depth 0, and no parent, and queue is [s]
-  #+begin_src q 
-    ; s: `s
-    ; c: count adj
-    ; state:([]node: key adj; color: c#`WHITE; depth:c#0N; parent:` )
-    ; show state: update color: `GRAY, depth: 0 from state where node = s
-    ; queue: (),s
-  #+end_src
 
-  #+RESULTS:
-  #+begin_example
-  node color depth parent
-  -----------------------
-  r    WHITE             
-  s    GRAY  0           
-  t    WHITE             
-  u    WHITE             
-  v    WHITE             
-  w    WHITE             
-  x    WHITE             
-  y    WHITE             
-  #+end_example
+  #+begin_src q :tangle yes :results none
+    / Since array is O(1) and dictionary binary lookup is O(log n),
+    / we require the nodes are index by continuous integers from 0
+    / Breadth First Search of a graph represented as adjancent list
+    / adj: array of array of int ( index of nodes)
+    / src: int . The index of the source node
+    BFS:{[adj; src]
+        ; visited: count[adj]#0b
+        ; visited[queue:(),src]: 1b;
+        ; while[count queue
+             ; queue,: 0N!adj[queue 0] inter where not visited
+             ; visited[queue]: 1b
+             ; queue: 1_queue
+             ]
+         };
+   #+end_src
 
-
-** At each step, if queue is not empty
-   #+begin_src q 
-   while[count queue
-     ; u: first queue
-     ; ud: first exec depth from state where node=u
-     ; child: state[`node] where (state[`node] in adj u) and state[`color]=`WHITE
-     ; state: update color: `GRAY, depth: ud+1, parent: u from state where node in child
-     ; state: update color: `BLACK from state where node = u
-     ; queue: (1_queue), child
-     ; show each (state; queue)
-     ]
+   #+begin_src q :results output
+     \e 2
+     show tree: BFS[adj;1]
    #+end_src
 
    #+RESULTS:
-   #+begin_example
-   node color depth parent
-   -----------------------
-   r    GRAY  1     s     
-   s    BLACK 0           
-   t    WHITE             
-   u    WHITE             
-   v    WHITE             
-   w    GRAY  1     s     
-   x    WHITE             
-   y    WHITE             
-   `r`w
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    WHITE             
-   u    WHITE             
-   v    GRAY  2     r     
-   w    GRAY  1     s     
-   x    WHITE             
-   y    WHITE             
-   `w`v
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    GRAY  2     w     
-   u    WHITE             
-   v    GRAY  2     r     
-   w    BLACK 1     s     
-   x    GRAY  2     w     
-   y    WHITE             
-   `v`t`x
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    GRAY  2     w     
-   u    WHITE             
-   v    BLACK 2     r     
-   w    BLACK 1     s     
-   x    GRAY  2     w     
-   y    WHITE             
-   `t`x
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    BLACK 2     w     
-   u    GRAY  3     t     
-   v    BLACK 2     r     
-   w    BLACK 1     s     
-   x    GRAY  2     w     
-   y    WHITE             
-   `x`u
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    BLACK 2     w     
-   u    GRAY  3     t     
-   v    BLACK 2     r     
-   w    BLACK 1     s     
-   x    BLACK 2     w     
-   y    GRAY  3     x     
-   `u`y
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    BLACK 2     w     
-   u    BLACK 3     t     
-   v    BLACK 2     r     
-   w    BLACK 1     s     
-   x    BLACK 2     w     
-   y    GRAY  3     x     
-   ,`y
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    BLACK 2     w     
-   u    BLACK 3     t     
-   v    BLACK 2     r     
-   w    BLACK 1     s     
-   x    BLACK 2     w     
-   y    BLACK 3     x     
-   `symbol$()
-   #+end_example
+   : 0 5
+   : ,4
+   : 2 6
+   : `long$()
+   : ,3
+   : ,7
+   : `long$()
+   : `long$()
+   
 
-
-* Non table version is shorter and clearer
-  
-  This line of code is not very good. 
-
-     ~state: update color: `BLACK from state where node = u~
-
-   It's clear to write:
-
-     ~color[u]:`BLACK~
-
-  #+begin_src q
-    ; s: `s
-    ; color: depth:parent: ()!(); 
-    ; color[s]: `GRAY; depth[s]: 0
-    ; queue: (),s
-    ; while[count queue
-         ; u: first queue
-         ; child: {x where not x in key color}adj[u]
-         ; color[child]: `GRAY
-         ; depth[child]: depth[u]+1
-         ; parent[child]: u
-         ; color[u]:`BLACK
-         ; queue: (1_queue), child
-         ; show flip `node`color`depth`parent!(::;color;depth;parent)@\: key adj
-         ]
+** Shortest Path from s
+   par is a map from node to it's parent, and keep applying(scan) par to a node, we get it's path to s. 
+   #+begin_src q
+   par: (!). tree`node`parent
+   (par\) `y
    #+end_src
 
    #+RESULTS:
-   #+begin_example
-   node color depth parent
-   -----------------------
-   r    GRAY  1     s     
-   s    BLACK 0           
-   t                      
-   u                      
-   v                      
-   w    GRAY  1     s     
-   x                      
-   y                      
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t                      
-   u                      
-   v    GRAY  2     r     
-   w    GRAY  1     s     
-   x                      
-   y                      
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    GRAY  2     w     
-   u                      
-   v    GRAY  2     r     
-   w    BLACK 1     s     
-   x    GRAY  2     w     
-   y                      
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    GRAY  2     w     
-   u                      
-   v    BLACK 2     r     
-   w    BLACK 1     s     
-   x    GRAY  2     w     
-   y                      
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    BLACK 2     w     
-   u    GRAY  3     t     
-   v    BLACK 2     r     
-   w    BLACK 1     s     
-   x    GRAY  2     w     
-   y                      
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    BLACK 2     w     
-   u    GRAY  3     t     
-   v    BLACK 2     r     
-   w    BLACK 1     s     
-   x    BLACK 2     w     
-   y    GRAY  3     x     
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    BLACK 2     w     
-   u    BLACK 3     t     
-   v    BLACK 2     r     
-   w    BLACK 1     s     
-   x    BLACK 2     w     
-   y    GRAY  3     x     
-   node color depth parent
-   -----------------------
-   r    BLACK 1     s     
-   s    BLACK 0           
-   t    BLACK 2     w     
-   u    BLACK 3     t     
-   v    BLACK 2     r     
-   w    BLACK 1     s     
-   x    BLACK 2     w     
-   y    BLACK 3     x     
-   #+end_example
+   : `y`x`w`s`
+
+** How fast is q at dictionary scan on iMac 3GHz 6-Core Intel i5
+
+   #+begin_src q
+     x: til 100 * 1000 * 1000
+     d:  (a:0N? x)!(b:0N? x)
+     d1:`s#(a i)!(b i:iasc a)
+     v: value d1
+
+     w: 5
+     \t d w
+     \t:100000 d1 w
+     \t:100000  v w
+
+     w: 50*1000*1000
+     \t d w
+     \t:100000 d1 w
+     \t:100000  v w
+   #+end_src
+
+   #+RESULTS:
+   : 10
+   : 31
+   : 15
+   : 57
+   : 30
+   : 15
+
+| 100 million rows | x[5]      | x[50,000,000] |
+|------------------+-----------+---------------|
+| scan             | 10,000 ns | 57,000 ns     |
+| binary           | 0.30 ns   | 0.30 ns       |
+| array            | 0.15 ns   | 0.15 ns       |
+
+
 
    
   
