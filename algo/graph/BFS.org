@@ -32,30 +32,19 @@
   [[file:test.png]]
 
 
-  #+begin_src q :tangle yes :results none
+  #+begin_src q :tangle yes :results output
     / Since array is O(1) and dictionary binary lookup is O(log n),
     / we require the nodes are index by continuous integers from 0
     / Breadth First Search of a graph represented as adjancent list
     / adj: array of array of int ( index of nodes)
     / src: int . The index of the source node
-    BFS:{[adj; src]
-        ; queue:(),src
-        ; i: -1
-        ; while[i<count[queue]-1
-             ; queue,: adj[queue i+:1] except queue
-             ]
-        ; queue
-         };
-   #+end_src
-
-   #+begin_src q :results output
-     \e 2
-     show tree: BFS[adj;1]
+    BFS:{[adj; src] enlist[src]{[adj;queue; i] queue, adj[queue i] except queue}[adj]/ til count adj};
+    show BFS[adj;1]
    #+end_src
 
    #+RESULTS:
    : 1 0 5 4 2 6 3 7
-   
+
 
 ** Shortest Path from s
    par is a map from node to it's parent, and keep applying(scan) par to a node, we get it's path to s. 
