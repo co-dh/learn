@@ -38,7 +38,8 @@
     / Breadth First Search of a graph represented as adjancent list
     / adj: array of array of int ( index of nodes)
     / src: int . The index of the source node
-    BFS:{[adj; src] enlist[src]{[adj;queue; i] queue, adj[queue i] except queue}[adj]/ til count adj};
+    /BFS:{[adj; src] enlist[src]{[adj;queue; i] queue, adj[queue i] except queue}[adj]/ til count adj};
+    BFS:{[adj; src] enlist[src]{y,x[y z] except y}[adj]/ til count adj};
     show BFS[adj;1]
    #+end_src
 
