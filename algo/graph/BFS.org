@@ -31,21 +31,40 @@
   #+RESULTS:
   [[file:test.png]]
 
+** Loop version. With 'except' that might slow.
+   
+   When n is big, you may want a boolean array visited to accelerate 'except'.
 
-  #+begin_src q :tangle yes :results output
+   #+begin_src q
+   BFS:{[adj; src]
+       ; queue:(),src
+       ; i: -1
+       ; while[i<count[queue]-1
+            ; queue,: adj[queue i+:1] except queue
+            ]
+       ; queue
+       };
+  #+end_src
+
+** Shorter version with over. Using the fact adj[out of boundary] gives empty list. 
+
+   #+begin_src q :tangle yes :results output
     / Since array is O(1) and dictionary binary lookup is O(log n),
     / we require the nodes are index by continuous integers from 0
     / Breadth First Search of a graph represented as adjancent list
     / adj: array of array of int ( index of nodes)
     / src: int . The index of the source node
-    /BFS:{[adj; src] enlist[src]{[adj;queue; i] queue, adj[queue i] except queue}[adj]/ til count adj};
-    BFS:{[adj; src] enlist[src]{y,x[y z] except y}[adj]/ til count adj};
+    BFS:{[adj; src] enlist[src]{[adj;queue;i] queue, adj[queue i] except queue}[adj]/ til count adj};
     show BFS[adj;1]
    #+end_src
 
    #+RESULTS:
    : 1 0 5 4 2 6 3 7
 
+** Even shorter by cryptic version
+   #+begin_src q
+    BFS:{[adj; src]enlist[src]{y,x[y z] except y}[adj]/til count adj};
+   #+end_src
 
 ** Shortest Path from s
    par is a map from node to it's parent, and keep applying(scan) par to a node, we get it's path to s. 
