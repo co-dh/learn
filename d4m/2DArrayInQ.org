@@ -1,0 +1,696 @@
+#+PROPERTY: header-args:q :results output
+* Library code
+
+#+begin_src q
+/Matrix multiplication of (D2D) Dictionary 2D.
+.q.mm:{cc: cols[value x] inter cols y; flip[ y cc] {sum x*y}/:\: x[;cc]}
+//For better display, change 0 to null.
+Nullify:{@[x; where x=0; :; x`]} //here we assume the key tybe is symbol, and null symbol map to null value.
+/ remove null from a dictionary
+RmNull: {where[not null x]#x}
+#+end_src
+
+#+RESULTS:
+
+* Foundation: 1D Q Dictionary Arithmetic: missing key filled, common key do math.
+  #+begin_src q
+    -1"a";
+    show a: `a`b!1 2
+    -1"\nb";
+    show b:   `b`c!3 4
+    -1"\n a+b:";
+    show a+b
+    -1"\na*b";
+    show a*b
+    -1"\na&b";
+    show a & b
+    -1"\na|b";
+    show a|b
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  a
+  a| 1
+  b| 2
+
+  b
+  b| 3
+  c| 4
+
+   a+b:
+  a| 1
+  b| 5
+  c| 4
+
+  a*b
+  a| 1
+  b| 6
+  c| 4
+
+  a&b
+  a| 1
+  b| 2
+  c| 4
+
+  a|b
+  a| 1
+  b| 3
+  c| 4
+  #+end_example
+
+* Dictionary 2D(D2D) in Q: A dictionary from array to table. Can flip. Select rows, columns.
+  #+begin_src q 
+    show t: `a`b!`u`x`y!/:v: 2 3# 1 1 0 0 0 1.0
+    show flip t
+    toMatrix: {flip value flip value x}
+    show toMatrix t
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+   | u x y
+  -| -----
+  a| 1 1 0
+  b| 0 0 1
+   | a b
+  -| ---
+  u| 1 0
+  x| 1 0
+  y| 0 1
+  1 1 0
+  0 0 1
+  #+end_example
+
+** selection and assignment
+   #+begin_src q
+     -1@"t";
+     show t
+     -1"\nselect row: t[`a]";
+     show t[`a]
+     -1"\nselect columns: t[;`x`y] or .[t; :: ; `x`y]";
+
+     show t[;`x`y]
+     show .[t; (::;`x`y)]
+     -1"\nSelect multiple rows and columns: .[t; (`a`b;`x`y)]";
+     show t[`a`b;`x`y]
+     -1"\nselect cell: t[`a;`u]";
+     show t[`a;`u]
+     -1"\n.[t; `a`x; :; 3.0] //assign value to a cell";
+     show .[t; `a`x; :; 3.0] 
+
+     -1 "\nAssign row: .[t; (`a; ::); :; 3 2 1.0] ";
+     show .[t; (`a;::) ; :; 3 2 1.0] 
+     -1"\n Assign to columns: .[t;(::;`x`y); :; 9.0]";
+     show .[t; (::;`x`y); :; 9.0 ]
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   t
+    | u x y
+   -| -----
+   a| 1 1 0
+   b| 0 0 1
+
+   select row: t[`a]
+   u| 1
+   x| 1
+   y| 0
+
+   select columns: t[;`x`y] or .[t; :: ; `x`y]
+   a| 1 0
+   b| 0 1
+   a| 1 0
+   b| 0 1
+
+   Select multiple rows and columns: .[t; (`a`b;`x`y)]
+   1 0
+   0 1
+
+   select cell: t[`a;`u]
+   1f
+
+   .[t; `a`x; :; 3.0] //assign value to a cell
+    | u x y
+   -| -----
+   a| 1 3 0
+   b| 0 0 1
+
+   Assign row: .[t; (`a; ::); :; 3 2 1.0] 
+    | u x y
+   -| -----
+   a| 3 2 1
+   b| 0 0 1
+
+    Assign to columns: .[t;(::;`x`y); :; 9.0]
+    | u x y
+   -| -----
+   a| 1 9 9
+   b| 0 9 9
+   #+end_example
+
+** 2D Dictionary Do not Support Arithmetic, but keyed table support
+   #+begin_src q
+     -1"dd\na";
+     show a: `a`b!`u`x`y!/: 2 3 #til 6
+     -1"\nb";
+     show b: `b`c!`x`y`z!/:10* 2 3 #til 6
+     -1"\na+b";
+     show a+b
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+
+   a
+    | u x y
+   -| -----
+   a| 0 1 2
+   b| 3 4 5
+
+   b
+    | x  y  z 
+   -| --------
+   b| 0  10 20
+   c| 30 40 50
+
+   a+b
+   '2021.08.15T22:05:11.029 mismatch
+     [0]  \l /tmp/obq.q
+          ^
+   #+end_example
+
+** 2D Dictionary Matrix Multiplication
+   #+begin_src q
+     show x: `a`b!([] u: 2 1; x:0 2)
+     -1"\ny:";
+     show y: `u`x`y!([]c: 0 2 1; d: 1 0 1)
+     -1"\ncommonColumn";
+     show commonColumn: cols[value x] inter cols y
+     flip y[`u`x]
+     x[;`u`x]
+     flip[ y`u`x] {sum x*y}/:\: x[;`u`x]
+
+     .q.mm:{cc: cols[value x] inter cols y; flip[ y cc] {sum x*y}/:\: x[;cc]}
+     show x mm y
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+    | u x
+   -| ---
+   a| 2 0
+   b| 1 2
+
+   y:
+    | c d
+   -| ---
+   u| 0 1
+   x| 2 0
+   y| 1 1
+
+   commonColumn
+   `u`x
+   c| 0 2
+   d| 1 0
+   a| 2 0
+   b| 1 2
+    | a b
+   -| ---
+   c| 0 4
+   d| 2 1
+    | a b
+   -| ---
+   c| 0 4
+   d| 2 1
+   #+end_example
+
+** Composite key D2D is supported by q , however, it can't flip.
+  2D Dictionary with 2 key columns are supported, but can't flip as expected.
+  #+begin_src q
+    show t: (`a`b;`c`d)! ([]x: 1 2; y:`c`d )
+    t[`a`b;]        /index supported
+    t[(`a;::);]     /but null doesn't mean *any* any more.
+    flip t
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+     | x y
+  ---| ---
+  a b| 1 c
+  c d| 2 d
+  x| 1
+  y| `c
+  x| 0N
+  y| `
+  '2021.08.18T06:49:10.899 nyi
+    [0]  flip t
+         ^
+  #+end_example
+
+* D2D Usage Example: Edge Graph
+** Adjacency Matrix from Edge Matrix
+*** D2D from csv
+#+begin_src q
+    system "c 25 200"
+    cs: ("SSI",20#"B"; enlist",") 0: `:/Users/dh/d4m/examples/1Intro/2EdgeArt/EdgeUnix.csv
+    / All column starts with V
+    vxx: {x where x like "V*"}cols cs
+    Nullify each `int$E: cs[`Edge]!flip vxx!cs vxx
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  | V01 V02 V03 V04 V05 V06 V07 V08 V09 V10 V11 V12 V13 V14 V15 V16 V17 V18 V19 V20
+--| -------------------------------------------------------------------------------
+B1| 1   1   1
+S1| 1   1   1
+G1| 1   1   1
+O1| 1   1   1
+O2| 1   1   1
+P1| 1   1   1
+B2|             1   1   1   1   1
+S2|             1   1   1   1   1
+G2|             1   1   1   1   1
+O3|             1   1   1   1   1
+O4|             1   1   1   1   1
+P2|             1   1   1   1   1
+O5|     1               1           1       1                   1               1
+P3|                                     1   1       1   1
+P4|     1                               1
+P5|     1                                       1   1
+P6|                                                         1   1   1
+P7|                 1                                       1           1
+P8|                         1                                   1           1
+#+end_example
+
+*** Edge to Edge. B1 can go to S1 by 3 nodes.   
+#+begin_src q
+    Nullify each E mm flip E
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  | B1 S1 G1 O1 O2 P1 B2 S2 G2 O3 O4 P2 O5 P3 P4 P5 P6 P7 P8
+--| --------------------------------------------------------
+B1| 3  3  3  3  3  3                    1     1  1
+S1| 3  3  3  3  3  3                    1     1  1
+G1| 3  3  3  3  3  3                    1     1  1
+O1| 3  3  3  3  3  3                    1     1  1
+O2| 3  3  3  3  3  3                    1     1  1
+P1| 3  3  3  3  3  3                    1     1  1
+B2|                   5  5  5  5  5  5  1              1  1
+S2|                   5  5  5  5  5  5  1              1  1
+G2|                   5  5  5  5  5  5  1              1  1
+O3|                   5  5  5  5  5  5  1              1  1
+O4|                   5  5  5  5  5  5  1              1  1
+P2|                   5  5  5  5  5  5  1              1  1
+O5| 1  1  1  1  1  1  1  1  1  1  1  1  6  1  1  1  1     1
+P3|                                     1  4  1  1
+P4| 1  1  1  1  1  1                    1  1  2  1
+P5| 1  1  1  1  1  1                    1  1  1  3
+P6|                                     1           3  1  1
+P7|                   1  1  1  1  1  1              1  3
+P8|                   1  1  1  1  1  1  1           1     3
+#+end_example
+
+*** Node to Node. V01 can connect to V02 via 6 edges
+#+begin_src q
+    Nullify each flip[E] mm E
+#+end_src
+
+#+RESULTS:
+#+begin_example
+   | V01 V02 V03 V04 V05 V06 V07 V08 V09 V10 V11 V12 V13 V14 V15 V16 V17 V18 V19 V20
+---| -------------------------------------------------------------------------------
+V01| 6   6   6
+V02| 6   9   6           1           1   1   1   1   1           1               1
+V03| 6   6   6
+V04|             6   6   6   6   6
+V05|             6   7   6   6   6                           1           1
+V06|     1       6   6   7   6   6   1       1                   1               1
+V07|             6   6   6   7   6                               1           1
+V08|             6   6   6   6   6
+V09|     1               1           1       1                   1               1
+V10|     1                               2   1       1   1
+V11|     1               1           1   1   2       1   1       1               1
+V12|     1                                       1   1
+V13|     1                               1   1   1   2   1
+V14|                                     1   1       1   1
+V15|                 1                                       2   1   1   1
+V16|     1               1   1       1       1               1   3   1       1   1
+V17|                                                         1   1   1
+V18|                 1                                       1           1
+V19|                         1                                   1           1
+V20|     1               1           1       1                   1               1
+#+end_example
+
+
+*** Select from cs where color = orange
+**** convert from table to D2D
+   #+begin_src q
+     show cs1: cs[`Edge] ! (1#`Edge)_cs
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+     | Color  Order V01 V02 V03 V04 V05 V06 V07 V08 V09 V10 V11 V12 V13 V14 V15 V16 V17 V18 V19 V20
+   --| --------------------------------------------------------------------------------------------
+   B1| Blue   2     1   1   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   S1| Silver 2     1   1   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   G1| Green  2     1   1   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   O1| Orange 2     1   1   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   O2| Orange 2     1   1   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   P1| Pink   2     1   1   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   B2| Blue   2     0   0   0   1   1   1   1   1   0   0   0   0   0   0   0   0   0   0   0   0
+   S2| Silver 2     0   0   0   1   1   1   1   1   0   0   0   0   0   0   0   0   0   0   0   0
+   G2| Green  2     0   0   0   1   1   1   1   1   0   0   0   0   0   0   0   0   0   0   0   0
+   O3| Orange 2     0   0   0   1   1   1   1   1   0   0   0   0   0   0   0   0   0   0   0   0
+   O4| Orange 2     0   0   0   1   1   1   1   1   0   0   0   0   0   0   0   0   0   0   0   0
+   P2| Pink   2     0   0   0   1   1   1   1   1   0   0   0   0   0   0   0   0   0   0   0   0
+   O5| Orange 1     0   1   0   0   0   1   0   0   1   0   1   0   0   0   0   1   0   0   0   1
+   P3| Pink   2     0   0   0   0   0   0   0   0   0   1   1   0   1   1   0   0   0   0   0   0
+   P4| Pink   2     0   1   0   0   0   0   0   0   0   1   0   0   0   0   0   0   0   0   0   0
+   P5| Pink   2     0   1   0   0   0   0   0   0   0   0   0   1   1   0   0   0   0   0   0   0
+   P6| Pink   2     0   0   0   0   0   0   0   0   0   0   0   0   0   0   1   1   1   0   0   0
+   P7| Pink   3     0   0   0   0   1   0   0   0   0   0   0   0   0   0   1   0   0   1   0   0
+   P8| Pink   3     0   0   0   0   0   0   1   0   0   0   0   0   0   0   0   1   0   0   1   0
+   #+end_example
+**** select row whose color is Orange
+   #+begin_src q
+       #[;cs1] where  cs1[;`Color]=`Orange
+   #+end_src
+
+   #+RESULTS:
+   :   | Color  Order V01 V02 V03 V04 V05 V06 V07 V08 V09 V10 V11 V12 V13 V14 V15 V16 V17 V18 V19 V20
+   : --| --------------------------------------------------------------------------------------------
+   : O1| Orange 2     1   1   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   : O2| Orange 2     1   1   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+   : O3| Orange 2     0   0   0   1   1   1   1   1   0   0   0   0   0   0   0   0   0   0   0   0
+   : O4| Orange 2     0   0   0   1   1   1   1   1   0   0   0   0   0   0   0   0   0   0   0   0
+   : O5| Orange 1     0   1   0   0   0   1   0   0   1   0   1   0   0   0   0   1   0   0   0   1
+
+* D2D Examples: Entity Analysic
+
+** Load CSV
+  #+begin_src q
+    system "c 15 200"
+    ent: ("JS***"; enlist csv) 0: `:/Users/dh/d4m/examples/2Apps/1EntityAnalysis/Entity.csv
+    show ent: ((!) . 1#'`type`Type) xcol delete x from  update position: -1_'"J"$";" vs/:position from ent
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  doc                 entity        position   Type
+  -------------------------------------------------------
+  19960825_13108.txt  "addis ababa" 54 132 974 "LOCATION"
+  19960930_84704.txt  "addis ababa" ,60        "LOCATION"
+  19961004_96087.txt  "addis ababa" 61 305     "LOCATION"
+  19961006_98377.txt  "addis ababa" ,68        "LOCATION"
+  19961009_104796.txt "addis ababa" 59 443     "LOCATION"
+  19961010_107656.txt "addis ababa" ,61        "LOCATION"
+  19961031_158809.txt "addis ababa" ,2109      "LOCATION"
+  19961101_159647.txt "addis ababa" ,1485      "LOCATION"
+  19961113_185784.txt "addis ababa" ,62        "LOCATION"
+  19960821_6808.txt   "aden"        ,212       "LOCATION"
+  ..
+  #+end_example
+
+** Explode table to sparse matrix, as matrix can't handle string.
+*** Combine 2 string columns to 1
+   #+begin_src q
+     show ent: delete entity, Type from update typeEnt: `$(Type,'"/",'entity) from ent
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   doc                 position   typeEnt
+   ---------------------------------------------------
+   19960825_13108.txt  54 132 974 LOCATION/addis ababa
+   19960930_84704.txt  ,60        LOCATION/addis ababa
+   19961004_96087.txt  61 305     LOCATION/addis ababa
+   19961006_98377.txt  ,68        LOCATION/addis ababa
+   19961009_104796.txt 59 443     LOCATION/addis ababa
+   19961010_107656.txt ,61        LOCATION/addis ababa
+   19961031_158809.txt ,2109      LOCATION/addis ababa
+   19961101_159647.txt ,1485      LOCATION/addis ababa
+   19961113_185784.txt ,62        LOCATION/addis ababa
+   19960821_6808.txt   ,212       LOCATION/aden
+   ..
+   #+end_example
+*** Get all column name of the exploded matrix
+   #+begin_src q
+       show col: distinct asc ent`typeEnt
+   #+end_src
+
+   #+RESULTS:
+   : `s#`LOCATION/addis ababa`LOCATION/aden`LOCATION/adriatic sea`LOCATION/aegean sea`LOCATION/afghanistan`LOCATION/africa`LOCATION/akron`LOCATION/alabama`LOCATION/alaska`LOCATION/albania`LOCATION/alber..
+
+*** Explode
+   #+begin_src q
+       ent1: ent[`doc]!exec col#/:(1#'typeEnt)!'(1#'position) from ent
+       system "c 20 200"
+       5#ent1
+   #+end_src
+
+   #+RESULTS:
+   :                    | LOCATION/addis ababa LOCATION/aden LOCATION/adriatic sea LOCATION/aegean sea LOCATION/afghanistan LOCATION/africa LOCATION/akron LOCATION/alabama LOCATION/alaska LOCATION/alban..
+   : ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------..
+   : 19960825_13108.txt | 54                                                                                                                                                                              ..
+   : 19960930_84704.txt | 60                                                                                                                                                                              ..
+   : 19961004_96087.txt | 61                                                                                                                                                                              ..
+   : 19961006_98377.txt | 68                                                                                                                                                                              ..
+   : 19961009_104796.txt| 59                                                                                                                                                                              ..
+
+*** What's a column look like? 'addis ababa' is in 19960825_13108.txt at position 54
+   #+begin_src q
+       RmNull ent1[;`$"LOCATION/addis ababa"]
+   #+end_src
+
+   #+RESULTS:
+   : 19960825_13108.txt | 54
+   : 19960930_84704.txt | 60
+   : 19961004_96087.txt | 61
+   : 19961006_98377.txt | 68
+   : 19961009_104796.txt| 59
+   : 19961010_107656.txt| 61
+   : 19961031_158809.txt| 2109
+   : 19961101_159647.txt| 1485
+   : 19961113_185784.txt| 62
+
+** D4M's col2type
+  The Type column have different type: LOCATION, PERSION etc. convert each type to a column
+  
+*** The q way
+  #+begin_src q
+    distinct ent`Type
+    (,'/) 1!'value exec flip (`doc,first `$Type)!ent[i][`doc`entity] by `$Type from ent
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  "LOCATION"
+  "ORGANIZATION"
+  "PERSON"
+  "TIME"
+  doc                 location      
+  ----------------------------------
+  19960825_13108.txt  "addis ababa" 
+  19960930_84704.txt  "addis ababa" 
+  19961004_96087.txt  "addis ababa" 
+  19961006_98377.txt  "addis ababa" 
+  19961009_104796.txt "addis ababa" 
+  19961010_107656.txt "addis ababa" 
+  19961031_158809.txt "addis ababa" 
+  19961101_159647.txt "addis ababa" 
+  19961113_185784.txt "addis ababa" 
+  19960821_6808.txt   "aden"        
+  19961026_145749.txt "aden"        
+  19961106_169278.txt "adriatic sea"
+  19961219_268288.txt "aegean sea"  
+  19960826_14771.txt  "afghanistan" 
+  19960910_44282.txt  "afghanistan" 
+  ..
+  doc                | LOCATION       ORGANIZATION                                    PERSON                   TIME        
+  -------------------| ----------------------------------------------------------------------------------------------------
+  19960825_13108.txt | "addis ababa"  ""                                              ""                       "1996-08-25"
+  19960930_84704.txt | "addis ababa"  "united nations security council"               ""                       "1996-09-30"
+  19961004_96087.txt | "addis ababa"  "united nations high commissioner for refugees" ""                       "1996-10-04"
+  19961006_98377.txt | "addis ababa"  ""                                              ""                       "1996-10-06"
+  19961009_104796.txt| "addis ababa"  "united nations"                                ""                       "1996-10-09"
+  19961010_107656.txt| "addis ababa"  "united nations"                                "boutros boutros-ghali"  "1996-10-10"
+  19961031_158809.txt| "addis ababa"  "united nations"                                "andrew hill"            "1996-10-31"
+  19961101_159647.txt| "addis ababa"  "united nations"                                "salim ahmed salim"      "1996-11-01"
+  19961113_185784.txt| "addis ababa"  "united nations security council"               "salim ahmed salim"      "1996-11-13"
+  19960821_6808.txt  | "aden"         ""                                              ""                       "1996-08-21"
+  19961026_145749.txt| "aden"         ""                                              "abdul wali al-shumairi" "1996-10-26"
+  19961106_169278.txt| "adriatic sea" ""                                              ""                       "1996-11-06"
+  19961219_268288.txt| "aegean sea"   ""                                              ""                       "1996-12-19"
+  19960826_14771.txt | "afghanistan"  ""                                              "ahmad shah masood"      "1996-08-26"
+  19960910_44282.txt | "afghanistan"  ""                                              ""                       "1996-09-10"
+  ..
+  #+end_example
+
+*** col2type from Exploded 2D Dictionary
+**** Where there is a value(position), spit the column name by /, and get a tuple. concatee the key with the tuple
+  #+begin_src q
+    key[ent1][0]
+    RmNull value[ent1][0]
+    key[ent1][0],/: "/" vs' string where not null value[ent1]0
+  #+end_src
+
+  #+RESULTS:
+  : `19960825_13108.txt
+  : LOCATION/addis ababa| 54
+  : `19960825_13108.txt "LOCATION" "addis ababa"
+
+****    It takes 14 secconds to un explode a 0.1 billion row*col matrix. sparsity 0.02%
+  #+begin_src q
+    unExplode: { raze {x,/:"/"vs'string where not null y}'[key x; value x]}
+    ue: unExplode ent1
+    count[ue], distinct count each ue
+    ue
+ #+end_src
+
+ #+RESULTS:
+ #+begin_example
+ 47089 3
+ `19960825_13108.txt  "LOCATION" "addis ababa"
+ `19960930_84704.txt  "LOCATION" "addis ababa"
+ `19961004_96087.txt  "LOCATION" "addis ababa"
+ `19961006_98377.txt  "LOCATION" "addis ababa"
+ `19961009_104796.txt "LOCATION" "addis ababa"
+ `19961010_107656.txt "LOCATION" "addis ababa"
+ `19961031_158809.txt "LOCATION" "addis ababa"
+ `19961101_159647.txt "LOCATION" "addis ababa"
+ `19961113_185784.txt "LOCATION" "addis ababa"
+ `19960821_6808.txt   "LOCATION" "aden"
+ `19961026_145749.txt "LOCATION" "aden"
+ `19961106_169278.txt "LOCATION" "adriatic sea"
+ `19961219_268288.txt "LOCATION" "aegean sea"
+ `19960826_14771.txt  "LOCATION" "afghanistan"
+ `19960910_44282.txt  "LOCATION" "afghanistan"
+ `19960910_44342.txt  "LOCATION" "afghanistan"
+ `19960912_49971.txt  "LOCATION" "afghanistan"
+ ..
+ #+end_example
+
+**** The exploded matrix has 47089 rows(.txt), 3657 columns, 0.17 billion cells, 47089 none null cell, sparsity: 0.027%
+    #+begin_src q
+    100* (0N!count ue) % 0N!(0N! count cols value ent1) * 0N!count ent1
+    #+end_src
+
+    #+RESULTS:
+    : 47089
+    : 3657
+    : 172204473
+    : 47089
+    : 0.02734482
+
+**** Put each Type as a column for easy process.
+***** Group by Type
+#+begin_src q
+      first ue[;0 2] group ue[;1]
+#+end_src
+
+#+RESULTS:
+#+begin_example
+`19960825_13108.txt  "addis ababa"
+`19960930_84704.txt  "addis ababa"
+`19961004_96087.txt  "addis ababa"
+`19961006_98377.txt  "addis ababa"
+`19961009_104796.txt "addis ababa"
+`19961010_107656.txt "addis ababa"
+`19961031_158809.txt "addis ababa"
+`19961101_159647.txt "addis ababa"
+`19961113_185784.txt "addis ababa"
+`19960821_6808.txt   "aden"
+`19961026_145749.txt "aden"
+`19961106_169278.txt "adriatic sea"
+`19961219_268288.txt "aegean sea"
+`19960826_14771.txt  "afghanistan"
+`19960910_44282.txt  "afghanistan"
+`19960910_44342.txt  "afghanistan"
+`19960912_49971.txt  "afghanistan"
+..
+#+end_example
+***** Convert from array of tuple to keyed table without lost information before uj
+#+begin_src q
+      first { select `$entity by txt from flip `txt`entity !flip x}each  ue[;0 2] group ue[;1]
+#+end_src
+
+#+RESULTS:
+#+begin_example
+txt              | entity
+-----------------| -------------------------------------------------------------------------------
+19960820_2304.txt| `united states`washington
+19960820_2324.txt| `britain`england`london
+19960820_2344.txt| `britain`europe`germany`ireland`london
+19960820_2374.txt| `london`new york
+19960820_2414.txt| ,`brazil
+19960820_2439.txt| `china`hong kong`indonesia`japan`korea`malaysia`singapore
+19960820_2469.txt| `egypt`kuwait
+19960820_2493.txt| `new york`united states
+19960820_2515.txt| `argentina`brazil`detroit`new york`paraguay`south america`united states`uruguay
+19960820_2539.txt| `san francisco`st. louis`united states`washington
+19960820_2563.txt| `madrid`spain
+19960820_2590.txt| `stockholm`sweden
+19960820_2616.txt| ,`germany
+19960820_2640.txt| `california`germany`japan`mexico`sweden`taiwan`united states
+19960820_2659.txt| `atlanta`australia`italy
+..
+#+end_example
+***** Rename entity column to value of Type
+#+begin_src q
+     first {(enlist[`entity]!/:enlist'[`$key x]) xcol' value x} { select `$entity by txt from flip `txt`entity !flip x}each  ue[;0 2] group ue[;1]
+#+end_src
+
+#+RESULTS:
+#+begin_example
+txt              | LOCATION                                                                       
+-----------------| -------------------------------------------------------------------------------
+19960820_2304.txt| `united states`washington                                                      
+19960820_2324.txt| `britain`england`london                                                        
+19960820_2344.txt| `britain`europe`germany`ireland`london                                         
+19960820_2374.txt| `london`new york                                                               
+19960820_2414.txt| ,`brazil
+19960820_2439.txt| `china`hong kong`indonesia`japan`korea`malaysia`singapore
+19960820_2469.txt| `egypt`kuwait
+19960820_2493.txt| `new york`united states
+19960820_2515.txt| `argentina`brazil`detroit`new york`paraguay`south america`united states`uruguay
+19960820_2539.txt| `san francisco`st. louis`united states`washington
+19960820_2563.txt| `madrid`spain
+19960820_2590.txt| `stockholm`sweden
+19960820_2616.txt| ,`germany
+19960820_2640.txt| `california`germany`japan`mexico`sweden`taiwan`united states
+19960820_2659.txt| `atlanta`australia`italy
+..
+#+end_example
+
+#+begin_src q
+     (uj/){(enlist[`entity]!/:enlist'[`$key x]) xcol' value x}  { select `$entity by txt from flip `txt`entity !flip x}each  ue[;0 2] group ue[;1]
+#+end_src  
+
+#+RESULTS:
+#+begin_example
+txt              | LOCATION                                                                        ORGANIZATION PERSON                       TIME                  
+-----------------| ------------------------------------------------------------------------------------------------------------------------------------------------
+19960820_2304.txt| `united states`washington                                                                    ,`arshad mohammed            `1996-08-20`1997-09-01
+19960820_2324.txt| `britain`england`london                                                                      `eddie george`kenneth clarke ,`1996-08-20
+19960820_2344.txt| `britain`europe`germany`ireland`london                                                       `symbol$()                   `1996-06-30`1996-08-20
+19960820_2374.txt| `london`new york                                                                             `symbol$()                   ,`1996-08-20
+19960820_2414.txt| ,`brazil                                                                                     `symbol$()                   ,`1996-08-20
+19960820_2439.txt| `china`hong kong`indonesia`japan`korea`malaysia`singapore                                    ,`lynne odonnell             ,`1996-08-20
+19960820_2469.txt| `egypt`kuwait                                                                                `symbol$()                   ,`1996-08-20
+19960820_2493.txt| `new york`united states                                                                      `mark wallace`mike spencer   ,`1996-08-20
+19960820_2515.txt| `argentina`brazil`detroit`new york`paraguay`south america`united states`uruguay              ,`robert eaton               ,`1996-08-20
+19960820_2539.txt| `san francisco`st. louis`united states`washington                                            ,`preston martin             ,`1996-08-20
+19960820_2563.txt| `madrid`spain                                                                                `symbol$()                   ,`1996-08-20
+19960820_2590.txt| `stockholm`sweden                                                                            `symbol$()                   ,`1996-08-20
+19960820_2616.txt| ,`germany                                                                                    `symbol$()                   ,`1996-08-20
+19960820_2640.txt| `california`germany`japan`mexico`sweden`taiwan`united states                                 ,`lisa raymond               ,`1996-08-20
+19960820_2659.txt| `atlanta`australia`italy                                                                     ,`david prince               ,`1996-08-20
+..
+#+end_example
