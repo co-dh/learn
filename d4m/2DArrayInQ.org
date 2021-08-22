@@ -1,5 +1,6 @@
 #+PROPERTY: header-args:q :results output
-* Library code
+* D4M in Q
+** Library code
 
 #+begin_src q
 /Matrix multiplication of (D2D) Dictionary 2D.
@@ -12,7 +13,7 @@ RmNull: {where[not null x]#x}
 
 #+RESULTS:
 
-* Foundation: 1D Q Dictionary Arithmetic: missing key filled, common key do math.
+** Foundation: 1D Q Dictionary Arithmetic: missing key filled, common key do math.
   #+begin_src q
     -1"a";
     show a: `a`b!1 2
@@ -59,7 +60,7 @@ RmNull: {where[not null x]#x}
   c| 4
   #+end_example
 
-* Dictionary 2D(D2D) in Q: A dictionary from array to table. Can flip. Select rows, columns.
+** Dictionary 2D(D2D) in Q: A dictionary from array to table. Can flip. Select rows, columns.
   #+begin_src q 
     show t: `a`b!`u`x`y!/:v: 2 3# 1 1 0 0 0 1.0
     show flip t
@@ -82,7 +83,7 @@ RmNull: {where[not null x]#x}
   0 0 1
   #+end_example
 
-** selection and assignment
+*** selection and assignment
    #+begin_src q
      -1@"t";
      show t
@@ -150,7 +151,7 @@ RmNull: {where[not null x]#x}
    b| 0 9 9
    #+end_example
 
-** 2D Dictionary Do not Support Arithmetic, but keyed table support
+*** 2D Dictionary Do not Support Arithmetic, but keyed table support
    #+begin_src q
      -1"dd\na";
      show a: `a`b!`u`x`y!/: 2 3 #til 6
@@ -181,7 +182,7 @@ RmNull: {where[not null x]#x}
           ^
    #+end_example
 
-** 2D Dictionary Matrix Multiplication
+*** 2D Dictionary Matrix Multiplication
    #+begin_src q
      show x: `a`b!([] u: 2 1; x:0 2)
      -1"\ny:";
@@ -226,7 +227,7 @@ RmNull: {where[not null x]#x}
    d| 2 1
    #+end_example
 
-** Composite key D2D is supported by q , however, it can't flip.
+*** Composite key D2D is supported by q , however, it can't flip.
   2D Dictionary with 2 key columns are supported, but can't flip as expected.
   #+begin_src q
     show t: (`a`b;`c`d)! ([]x: 1 2; y:`c`d )
@@ -250,9 +251,9 @@ RmNull: {where[not null x]#x}
          ^
   #+end_example
 
-* D2D Usage Example: Edge Graph
-** Adjacency Matrix from Edge Matrix
-*** D2D from csv
+** D2D Usage Example: Edge Graph
+*** Adjacency Matrix from Edge Matrix
+**** D2D from csv
 #+begin_src q
     system "c 25 200"
     cs: ("SSI",20#"B"; enlist",") 0: `:/Users/dh/d4m/examples/1Intro/2EdgeArt/EdgeUnix.csv
@@ -286,7 +287,7 @@ P7|                 1                                       1           1
 P8|                         1                                   1           1
 #+end_example
 
-*** Edge to Edge. B1 can go to S1 by 3 nodes.   
+**** Edge to Edge. B1 can go to S1 by 3 nodes.
 #+begin_src q
     Nullify each E mm flip E
 #+end_src
@@ -316,7 +317,7 @@ P7|                   1  1  1  1  1  1              1  3
 P8|                   1  1  1  1  1  1  1           1     3
 #+end_example
 
-*** Node to Node. V01 can connect to V02 via 6 edges
+**** Node to Node. V01 can connect to V02 via 6 edges
 #+begin_src q
     Nullify each flip[E] mm E
 #+end_src
@@ -348,8 +349,8 @@ V20|     1               1           1       1                   1              
 #+end_example
 
 
-*** Select from cs where color = orange
-**** convert from table to D2D
+**** Select from cs where color = orange
+***** convert from table to D2D
    #+begin_src q
      show cs1: cs[`Edge] ! (1#`Edge)_cs
    #+end_src
@@ -378,7 +379,7 @@ V20|     1               1           1       1                   1              
    P7| Pink   3     0   0   0   0   1   0   0   0   0   0   0   0   0   0   1   0   0   1   0   0
    P8| Pink   3     0   0   0   0   0   0   1   0   0   0   0   0   0   0   0   1   0   0   1   0
    #+end_example
-**** select row whose color is Orange
+***** select row whose color is Orange
    #+begin_src q
        #[;cs1] where  cs1[;`Color]=`Orange
    #+end_src
@@ -392,9 +393,9 @@ V20|     1               1           1       1                   1              
    : O4| Orange 2     0   0   0   1   1   1   1   1   0   0   0   0   0   0   0   0   0   0   0   0
    : O5| Orange 1     0   1   0   0   0   1   0   0   1   0   1   0   0   0   0   1   0   0   0   1
 
-* D2D Examples: Entity Analysic
+** D2D Examples: Entity Analysic
 
-** Load CSV
+*** Load CSV
   #+begin_src q
     system "c 15 200"
     ent: ("JS***"; enlist csv) 0: `:/Users/dh/d4m/examples/2Apps/1EntityAnalysis/Entity.csv
@@ -418,8 +419,8 @@ V20|     1               1           1       1                   1              
   ..
   #+end_example
 
-** Explode table to sparse matrix, as matrix can't handle string.
-*** Combine 2 string columns to 1
+*** Explode table to sparse matrix, as matrix can't handle string.
+**** Combine 2 string columns to 1
    #+begin_src q
      show ent: delete entity, Type from update typeEnt: `$(Type,'"/",'entity) from ent
    #+end_src
@@ -440,7 +441,7 @@ V20|     1               1           1       1                   1              
    19960821_6808.txt   ,212       LOCATION/aden
    ..
    #+end_example
-*** Get all column name of the exploded matrix
+**** Get all column name of the exploded matrix
    #+begin_src q
        show col: distinct asc ent`typeEnt
    #+end_src
@@ -448,7 +449,7 @@ V20|     1               1           1       1                   1              
    #+RESULTS:
    : `s#`LOCATION/addis ababa`LOCATION/aden`LOCATION/adriatic sea`LOCATION/aegean sea`LOCATION/afghanistan`LOCATION/africa`LOCATION/akron`LOCATION/alabama`LOCATION/alaska`LOCATION/albania`LOCATION/alber..
 
-*** Explode
+**** Explode
    #+begin_src q
        ent1: ent[`doc]!exec col#/:(1#'typeEnt)!'(1#'position) from ent
        system "c 20 200"
@@ -464,7 +465,7 @@ V20|     1               1           1       1                   1              
    : 19961006_98377.txt | 68                                                                                                                                                                              ..
    : 19961009_104796.txt| 59                                                                                                                                                                              ..
 
-*** What's a column look like? 'addis ababa' is in 19960825_13108.txt at position 54
+**** What's a column look like? 'addis ababa' is in 19960825_13108.txt at position 54
    #+begin_src q
        RmNull ent1[;`$"LOCATION/addis ababa"]
    #+end_src
@@ -480,10 +481,10 @@ V20|     1               1           1       1                   1              
    : 19961101_159647.txt| 1485
    : 19961113_185784.txt| 62
 
-** D4M's col2type
+*** D4M's col2type
   The Type column have different type: LOCATION, PERSION etc. convert each type to a column
   
-*** The q way
+**** The q way
   #+begin_src q
     distinct ent`Type
     (,'/) 1!'value exec flip (`doc,first `$Type)!ent[i][`doc`entity] by `$Type from ent
@@ -533,8 +534,8 @@ V20|     1               1           1       1                   1              
   ..
   #+end_example
 
-*** col2type from Exploded 2D Dictionary
-**** Where there is a value(position), spit the column name by /, and get a tuple. concatee the key with the tuple
+**** col2type from Exploded 2D Dictionary
+***** Where there is a value(position), spit the column name by /, and get a tuple. concatee the key with the tuple
   #+begin_src q
     key[ent1][0]
     RmNull value[ent1][0]
@@ -546,7 +547,7 @@ V20|     1               1           1       1                   1              
   : LOCATION/addis ababa| 54
   : `19960825_13108.txt "LOCATION" "addis ababa"
 
-****    It takes 14 secconds to un explode a 0.1 billion row*col matrix. sparsity 0.02%
+*****    It takes 14 secconds to un explode a 0.1 billion row*col matrix. sparsity 0.02%
   #+begin_src q
     unExplode: { raze {x,/:"/"vs'string where not null y}'[key x; value x]}
     ue: unExplode ent1
@@ -577,7 +578,7 @@ V20|     1               1           1       1                   1              
  ..
  #+end_example
 
-**** The exploded matrix has 47089 rows(.txt), 3657 columns, 0.17 billion cells, 47089 none null cell, sparsity: 0.027%
+***** The exploded matrix has 47089 rows(.txt), 3657 columns, 0.17 billion cells, 47089 none null cell, sparsity: 0.027%
     #+begin_src q
     100* (0N!count ue) % 0N!(0N! count cols value ent1) * 0N!count ent1
     #+end_src
@@ -589,8 +590,8 @@ V20|     1               1           1       1                   1              
     : 47089
     : 0.02734482
 
-**** Put each Type as a column for easy process.
-***** Group by Type
+***** Put each Type as a column for easy process.
+****** Group by Type
 #+begin_src q
       first ue[;0 2] group ue[;1]
 #+end_src
@@ -616,7 +617,7 @@ V20|     1               1           1       1                   1              
 `19960912_49971.txt  "afghanistan"
 ..
 #+end_example
-***** Convert from array of tuple to keyed table without lost information before uj
+****** Convert from array of tuple to keyed table without lost information before uj
 #+begin_src q
       first { select `$entity by txt from flip `txt`entity !flip x}each  ue[;0 2] group ue[;1]
 #+end_src
@@ -642,7 +643,7 @@ txt              | entity
 19960820_2659.txt| `atlanta`australia`italy
 ..
 #+end_example
-***** Rename entity column to value of Type
+****** Rename entity column to value of Type
 #+begin_src q
      first {(enlist[`entity]!/:enlist'[`$key x]) xcol' value x} { select `$entity by txt from flip `txt`entity !flip x}each  ue[;0 2] group ue[;1]
 #+end_src
