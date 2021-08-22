@@ -13,7 +13,8 @@ RmNull: {where[not null x]#x}
 
 #+RESULTS:
 
-** Foundation: 1D Q Dictionary Arithmetic: missing key filled, common key do math.
+** Foundation: 1D Q Dictionary Arithmetic
+  When do math(+,-,*,/, any binary function) with dictionary, missing keys are filled, and values on common keys will do the corresponding math.
   #+begin_src q
     -1"a";
     show a: `a`b!1 2
