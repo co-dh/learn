@@ -1,4 +1,4 @@
-#+PROPERTY: header-args:q :results output :export both
+#+PROPERTY: header-args:q :results output :exports both
 * D4M in Q
 ** Library code
 
