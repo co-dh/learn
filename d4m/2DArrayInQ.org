@@ -61,12 +61,11 @@ RmNull: {where[not null x]#x}
   c| 4
   #+end_example
 
-** Dictionary 2D(D2D) in Q: A dictionary from array to table. Can flip. Select rows, columns.
+** Dictionary 2D(D2D) in Q
+ A dictionary from array to table. It can be flipped, and you can select rows, columns from it.
   #+begin_src q 
     show t: `a`b!`u`x`y!/:v: 2 3# 1 1 0 0 0 1.0
     show flip t
-    toMatrix: {flip value flip value x}
-    show toMatrix t
   #+end_src
 
   #+RESULTS:
