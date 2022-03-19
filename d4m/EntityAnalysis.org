@@ -1,0 +1,508 @@
+#+PROPERTY: header-args:q :results output
+* Intro
+
+* Readline slow octave. set blink-matching-paren off in ~/.inputrc
+* Best way to represent Relation in Q: tuple of arrays
+  
+  | Method              | Dup key | 1 to 1 | 1 to many | many to 1 | Composition | Reverse | Application/look up |
+  | Dictionary          | N       | +      | +         | N         | +           | Hard    | +                   |
+  | Pair                | Y       | +      | dup row   | dup row   | +           | +       | +                   |
+  | Table. same as Pair |         |        |           |           |             |         |                     |
+
+  
+* Relation Algebra in Q
+  #+begin_src q
+    rev:{value[x]!key[x]}; //TODO: sort x?
+    .q.at: {value[x] where key[x] in y}
+  #+end_src
+
+  #+RESULTS:
+
+* Entity Analysis
+  #+begin_src q  :results output
+    c: ("J*S*S"; enlist csv) 0: `:Entity.csv
+    \c 5 200
+    show c: update `$doc from `x`doc`entity`position`Type xcol update "J"${x where not x like ""} each ";"vs/: position from c
+  #+end_src
+
+  #+RESULTS:
+  : x doc                 entity      position   Type    
+  : -----------------------------------------------------
+  : 1 19960825_13108.txt  addis ababa 54 132 974 LOCATION
+  : 2 19960930_84704.txt  addis ababa ,60        LOCATION
+  : 3 19961004_96087.txt  addis ababa 61 305     LOCATION
+  : 4 19961006_98377.txt  addis ababa ,68        LOCATION
+  : 5 19961009_104796.txt addis ababa 59 443     LOCATION
+  : ..
+
+
+** friend of michael chang: Relation algebra is the best.
+*** by q
+   #+begin_src q
+     show d: exec doc from c where entity like "michael chang", Type=`PERSON
+     show exec entity from c where doc in d, Type=`PERSON
+   #+end_src
+
+   #+RESULTS:
+   : "19960824_12590.txt"
+   : "19960904_31384.txt"
+   : "19960908_39550.txt"
+   : "19961005_98009.txt"
+   : "19961028_146576.txt"
+   : "19970109_295426.txt"
+   : `alex obrien`amy frazier`ann hobbs`byron black`javier sanchez`javier sanchez`jonathan stark`jonathan stark`lindsay davenport`mary joe fernandez`michael chang`michael chang`michael chang`michael cha..
+*** by Octave
+    #+begin_src
+      p='PERSON|michael chang,';
+      P=StartsWith('PERSON|,');
+      L=StartsWith('LOCATION|,');
+      pFriend=Col(E(Row(E(:,p)),P));
+    #+end_src
+    
+*** By Relation: Per4Doc at Doc4Per at `$"michael chang"
+    #+begin_src q
+      \c 15 200
+      show  Per4Doc: exec doc!entity  from c where Type = `PERSON
+      Doc4Per: rev[Per4Doc]
+
+      show asc pFriend: Per4Doc at 0N!Doc4Per at `$"michael chang"
+      
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    19960912_48332.txt | abd-al-ghani abd-al-ghafur
+    19970130_345565.txt| abdel-halim
+    19960926_78596.txt | abdel-jawwad saleh
+    19960903_30093.txt | abdel-meguid
+    19960829_21223.txt | abdel-wahab abdel-rahim
+    19960926_79154.txt | abdul ali
+    19961107_173880.txt| abdul amir al-anbari
+    19961107_174120.txt| abdul amir al-anbari
+    19961107_174220.txt| abdul amir al-anbari
+    19960905_35167.txt | abdul hakim murad
+    19961030_154039.txt| abdul hameed
+    19961107_174842.txt| abdul jabar
+    ..
+    `19960824_12590.txt`19960904_31384.txt`19960908_39550.txt`19961005_98009.txt`19961028_146576.txt`19970109_295426.txt
+    `s#`alex obrien`amy frazier`ann hobbs`byron black`javier sanchez`javier sanchez`jonathan stark`jonathan stark`lindsay davenport`mary joe fernandez`michael chang`michael chang`michael chang`michael ..
+    12
+    #+end_example
+    
+** Most common locations associated with friends of Michael Chang
+   #+begin_src
+   sum(E(:,pFriend).' * E(:,L),1)>15
+   #+end_src
+   #+begin_src q
+     \c 5 200
+     show Loc4Doc: exec (`$doc)!entity from c where Type=`LOCATION
+     /show desc count each group 0N!Loc4Doc at Doc4Per at pFriend
+     count Doc4Per at pFriend
+   #+end_src
+
+   #+RESULTS:
+   : 19960825_13108.txt | addis ababa
+   : 19960930_84704.txt | addis ababa
+   : 19961004_96087.txt | addis ababa
+   : 19961006_98377.txt | addis ababa
+   : 19961009_104796.txt| addis ababa
+   : 19961010_107656.txt| addis ababa
+   : 19961031_158809.txt| addis ababa
+   : ..
+   : 33
+
+* Relation with payload (in;payload;out)
+  
+  #+begin_src q
+    
+  #+end_src
+  
+* Matrix have row, col, value, but Relation only have row, col.
+  
+* Sparse Matrix's tuple representation == Relation with payload
+  
+* How sparse is Doc To Location Matrix? Only 0.4% entries are not null.
+  #+begin_src q
+    show Doc2Loc: select doc, entity from c where Type=`LOCATION
+    (100* nnz%nRow*nCol; nnz: count[Doc2Loc]; nRow: count distinct Doc2Loc`doc ; nCol: count distinct Doc2Loc`entity)
+  #+end_src
+
+  #+RESULTS:
+  : doc                 entity     
+  : -------------------------------
+  : 19960825_13108.txt  addis ababa
+  : 19960930_84704.txt  addis ababa
+  : 19961004_96087.txt  addis ababa
+  : 19961006_98377.txt  addis ababa
+  : 19961009_104796.txt addis ababa
+  : ..
+  : (0.4460937;30803;9964;693)
+  
+* Embeded R
+  #+begin_src q :results none
+    setenv[`R_HOME;] first system "sh R RHOME"
+    \l rinit.q
+    Rcmd "library(tidyverse)"
+    Rget "diamonds"
+    Rcmd "a<-ggplot(diamonds, aes(color,cut))+geom_point()"
+    Rcmd "print(a)"
+    Roff[]
+  #+end_src
+
+* Power law:
+**   Give a single discrete variable, plot it's count of each value by frequency
+  #+begin_src q
+    show  cnt: update row:i from desc  select  cnt:log count i by entity from c where Type =`LOCATION
+    Rset["c"; cnt]
+    Rcmd "p<-ggplot(c, aes(row, cnt)) + geom_point(shape=1, alpha=0.3) "
+    Rcmd "print(p)"
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  entity       | cnt      row
+  -------------| ------------
+  united states| 8.123558 0  
+  new york     | 7.26403  1  
+  london       | 7.040536 2  
+  japan        | 6.633318 3  
+  washington   | 6.350886 4  
+  europe       | 6.338594 5  
+  chicago      | 6.336826 6  
+  france       | 6.336826 7  
+  germany      | 6.317165 8  
+  tokyo        | 6.313548 9  
+  australia    | 6.150603 10 
+  china        | 6.098074 11 
+  paris        | 6.008813 12 
+  britain      | 6.006353 13 
+  india        | 5.83773  14 
+  africa       | 5.823046 15 
+  canada       | 5.796058 16 
+  asia         | 5.758902 17 
+  italy        | 5.713733 18 
+  hong kong    | 5.693732 19 
+  ..
+  #+end_example
+  
+** Correct way to turn off plot  
+  #+begin_src q :results none
+  Roff[]
+  #+end_src
+
+  #+begin_src q
+    show select cnt: count i by entity from c where Type = `LOCATION
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  entity      | cnt
+  ------------| ---
+  addis ababa | 9  
+  aden        | 2  
+  adriatic sea| 1  
+  aegean sea  | 1  
+  afghanistan | 45 
+  africa      | 338
+  akron       | 1  
+  alabama     | 19 
+  alaska      | 27 
+  albania     | 21 
+  alberta     | 31 
+  albuquerque | 4  
+  algeria     | 43 
+  algiers     | 12 
+  amman       | 29 
+  amsterdam   | 149
+  anaheim     | 11 
+  anchorage   | 9  
+  andaman sea | 4  
+  andorra     | 1  
+  ..
+  #+end_example
+
+  #+begin_src q
+    show nm: (exec doc from c where entity like "new york") inter (exec doc from c where entity like "michael chang")
+    show select from c where any doc like/: nm
+  #+end_src
+
+  #+RESULTS:
+  #+begin_example
+  "19960824_12590.txt"
+  "19960904_31384.txt"
+  "19960908_39550.txt"
+  x     doc                  entity         position    Type    
+  --------------------------------------------------------------
+  2067  "19960904_31384.txt" austria        268 486     LOCATION
+  2073  "19960908_39550.txt" austria        ,427        LOCATION
+  2680  "19960908_39550.txt" belarus        ,259        LOCATION
+  3594  "19960908_39550.txt" britain        683 707     LOCATION
+  6519  "19960908_39550.txt" croatia        ,489        LOCATION
+  6667  "19960824_12590.txt" czech republic ,333        LOCATION
+  6681  "19960904_31384.txt" czech republic ,375        LOCATION
+  6690  "19960908_39550.txt" czech republic ,289        LOCATION
+  9403  "19960904_31384.txt" germany        ,241        LOCATION
+  9431  "19960908_39550.txt" germany        397 524 579 LOCATION
+  17995 "19960824_12590.txt" new york       ,45         LOCATION
+  18106 "19960904_31384.txt" new york       ,56         LOCATION
+  18175 "19960908_39550.txt" new york       ,50         LOCATION
+  21816 "19960824_12590.txt" romania        ,193        LOCATION
+  23005 "19960824_12590.txt" slovakia       ,401        LOCATION
+  23509 "19960904_31384.txt" spain          ,318        LOCATION
+  23519 "19960908_39550.txt" spain          ,334        LOCATION
+  24000 "19960824_12590.txt" sweden         ,225        LOCATION
+  24167 "19960904_31384.txt" switzerland    ,344        LOCATION
+  26043 "19960824_12590.txt" ukraine        ,266        LOCATION
+  ..
+  #+end_example
+
+
+* Sparse Matrix
+** Storage
+   
+   - Dictionary of Keys :: (row, col) -> val . poor to iterating
+   - List of Lists :: [(colIdx, val)]
+   - Coordinate List :: asc (row, col, val)
+   - Compressed Sparse Row (Yale format) ::  Fast row access and Matrix-vector multiplication. (vals; cols; rowPtr)
+   - Compressed Sparse Column :: Good for arithmetic, column slicing, Matrix-vector product.   (vals, rows; colPtr). 
+     
+* Sparse Matrix in q with Coordinate List
+  
+  We can represent a sparse matrix in Q with a 3 column table ([]row; col; val).
+  We may want to put row and col as keyed column.
+  
+  It's simple, fast (we can sort), row and column key can be anything than just numbers.
+  #+begin_src q
+    show t: ([row:`a`a`b`c; col:`x`y`z`u] val: 1 2 3 4)
+    row:{selecct from y where x=row}
+    parse "select from y where row=x"
+    row:{?[y; enlist(=;`row;`x);0b;()]}
+    col:{select from y where col=x}
+    show row[`a;t]
+    \e 2
+    show col[`x]t
+
+
+  #+end_src
+
+  #+RESULTS:
+  : row col| val
+  : -------| ---
+  : a   x  | 1  
+  : a   y  | 2  
+  : b   z  | 3  
+  : c   u  | 4  
+  : '2021.08.14T18:06:19.508 type
+  :   [0]  \l /tmp/obq.q
+  :        ^
+
+
+* Keyed Table in Q as Associated Array
+** Keyed Table support Arithmetics, but not flip, while 2D Dictionary support flip, but not Arithmetics.
+    We choose keyed table, because everybody knows it, and implement flip.
+*** flip a keyed table where the key is only 1 column
+    #+begin_src q
+      Flip:{[keyedTable]
+          ; kk: first cols key keyedTable
+          ; ktable: flip enlist[kk]!enlist cols value keyedTable
+          ; ktable! (first value flip key keyedTable)!/: value flip value keyedTable
+          };
+
+      show a: ([k:`a`b]u: 0 3; x: 1 4; y: 2 5)
+      show Flip a
+      show a~Flip Flip a
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    k| u x y
+    -| -----
+    a| 0 1 2
+    b| 3 4 5
+    k| a b
+    -| ---
+    u| 0 3
+    x| 1 4
+    y| 2 5
+    1b
+    #+end_example
+*** The column name of the key of keyed table doesn't matter, we can use `k always, and simplify the code
+    #+begin_src q
+      show x: ([k:`a`b]u: 0 3; x: 1 4; y: 2 5)
+      Flip: {([]k: cols value x) !key[x][`k]  !/:    value flip value x}
+      show Flip x
+      show x~Flip Flip x
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    k| u x y
+    -| -----
+    a| 0 1 2
+    b| 3 4 5
+    k| a b
+    -| ---
+    u| 0 3
+    x| 1 4
+    y| 2 5
+    1b
+    #+end_example
+
+*** Keyed Table Selection and Assignment
+    #+begin_src q
+      show x: a
+      /show y: Flip a
+      /show Flip y
+      show x[`a;`u`x] //select row, col, :: for all line.
+      show x[;`u]
+      show .[x; (`a;::); :; 9] //assign to row or col
+      show .[x; (::;`u); :; 9]
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    k| u x y
+    -| -----
+    a| 0 1 2
+    b| 3 4 5
+    0 1
+    k|  
+    -| -
+    a| 0
+    b| 3
+    k| u x y
+    -| -----
+    a| 9 9 9
+    b| 3 4 5
+    k| u x y
+    -| -----
+    a| 9 1 2
+    b| 9 4 5
+    #+end_example
+*** Keyed Table Matrix Multiplication
+    #+begin_src q
+      show x: ([k: `a`b] u: 2 1; x:0 2;y: 0 1)
+      -1"\ny:";
+      show y: ([k: `u`x`y] c: 0 2 1; d: 1 0 1)
+
+      / Q store table by column, so column multiplication is faster
+      keyedArrayToDict: {first[flip key x]!value x}
+      mm: { keyedArrayToDict each (x {sum x*y}/:\: Flip y)}
+      show mm[x;y] 
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    k| u x y
+    -| -----
+    a| 2 0 0
+    b| 1 2 1
+
+    y:
+    k| c d
+    -| ---
+    u| 0 1
+    x| 2 0
+    y| 1 1
+    k| c d
+    -| ---
+    a| 0 2
+    b| 5 2
+    #+end_example
+    
+*** What if columns are not the same? Wrong. The extra column stays, and make the result wrong
+    #+begin_src q
+      show x: ([k: `a`b] u: 2 1; x:0 2)
+      -1"\ny:";
+      show y: ([k: `u`x`y] c: 0 2 1; d: 1 0 1)
+      -1"\nmm[x;y]";
+      show mm[x;y]
+      (x {x*y}/:\:Flip y)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+    k| u x
+    -| ---
+    a| 2 0
+    b| 1 2
+
+    y:
+    k| c d
+    -| ---
+    u| 0 1
+    x| 2 0
+    y| 1 1
+
+    mm[x;y]
+    k| c d
+    -| ---
+    a| 1 3
+    b| 5 2
+    k|                                     
+    -| ------------------------------------
+    a| (+(,`k)!,`c`d)!+`u`x`y!(0 2;0 0;1 1)
+    b| (+(,`k)!,`c`d)!+`u`x`y!(0 1;4 0;1 1)
+    #+end_example
+    
+*** MM
+    #+begin_src q
+      show x: ([k: `a`b] u: 2 1; x:0 2)
+      -1"\ny:";
+      show y: ([k: `u`x`y] c: 0 2 1; d: 1 0 1)
+      -1"\ncommonColumn";
+      show commonColumn: cols[value x] inter key[y][`k]
+      x1: (key[x][`k] ! value x[;commonColumn])
+      y1: flip y @/: commonColumn
+      show x1 {sum x*y}/:\: y1
+    #+end_src
+
+    #+RESULTS:f
+    #+begin_example
+    k| u x
+    -| ---
+    a| 2 0
+    b| 1 2
+
+    y:
+    k| c d
+    -| ---
+    u| 0 1
+    x| 2 0
+    y| 1 1
+
+    commonColumn
+    `u`x
+     | c d
+    -| ---
+    a| 0 2
+    b| 4 1
+    #+end_example
+
+**** The result is naturally a 2D Dictionary, which makes me wonder if 2D Dictionary is better than keyed table except we need arithematics.
+     
+** Convert from dense matrix to 2D Dictionary
+     show doc2loc: select doc, entity from c where Type = `LOCATION
+     kRow: asc distinct doc2loc`doc
+     kCol: asc distinct doc2loc`entity
+     
+
+* Why Matrix Multiplication has to be defined on a SemiRing?
+  It's because we want MM to be associative.
+** In the extreme simple case of 3 1x1 matrix multiplication A B C = A[0][0] * B[0][0] * C[0][0] , MM associative requires * to be associative.
+** In the simple case of a A:1x2 * B:2x2 * C:2x1 -> D:1x1. To get a single result, that requires * distribute over +
+
+* Distribution law in Point Free Style
+
+** Point Free Function programming with function product
+
+   Let's extend * to number * vector
+   
+  (b+c)*a = b*a+c*a
+  (b;c) a   (+ ; id) * == * +    //The order of + and * switched.
+  a*(b+c)=a*b+a*c
+  a (b;c)   (id ; +) * == * +
+  
+  
+  
+  
